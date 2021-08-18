@@ -32,9 +32,7 @@ public final class CoreDataFeedStore: FeedStore {
 		let context = self.context
 		context.perform {
 			do {
-				let request = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
-				request.returnsObjectsAsFaults = false
-				if let cache = try context.fetch(request).first {
+				if let cache = try ManagedCache.find(in: context) {
 					completion(.found(
 						feed: cache.feed!
 							.compactMap { ($0 as? ManagedFeedImage) }
@@ -58,12 +56,7 @@ public final class CoreDataFeedStore: FeedStore {
 		let context = self.context
 		context.perform {
 			do {
-				let request = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
-				request.returnsObjectsAsFaults = false
-				if let cache = try context.fetch(request).first {
-					context.delete(cache)
-				}
-				let managedCache = ManagedCache(context: context)
+				let managedCache = try ManagedCache.getNewUniqueInstance(context: context)
 				managedCache.timestamp = timestamp
 				managedCache.feed = NSOrderedSet(array: feed.map { local in
 					let managed = ManagedFeedImage(context: context)
@@ -73,7 +66,6 @@ public final class CoreDataFeedStore: FeedStore {
 					managed.url = local.url
 					return managed
 				})
-
 				try context.save()
 				completion(nil)
 			} catch {
@@ -84,5 +76,18 @@ public final class CoreDataFeedStore: FeedStore {
 
 	public func deleteCachedFeed(completion: @escaping DeletionCompletion) {
 		fatalError("Must be implemented")
+	}
+}
+
+private extension ManagedCache {
+	static func getNewUniqueInstance(context: NSManagedObjectContext) throws -> ManagedCache {
+		try find(in: context).map(context.delete)
+		return ManagedCache(context: context)
+	}
+
+	static func find(in context: NSManagedObjectContext) throws -> ManagedCache? {
+		let request = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
+		request.returnsObjectsAsFaults = false
+		return try context.fetch(request).first
 	}
 }
