@@ -29,11 +29,11 @@ public final class CoreDataFeedStore: FeedStore {
 	}
 
 	public func retrieve(completion: @escaping RetrievalCompletion) {
-		fatalError("Must be implemented")
+		completion(.empty)
 	}
 
 	public func insert(_ feed: [LocalFeedImage], timestamp: Date, completion: @escaping InsertionCompletion) {
-		fatalError("Must be implemented")
+		completion(.none)
 	}
 
 	public func deleteCachedFeed(completion: @escaping DeletionCompletion) {
