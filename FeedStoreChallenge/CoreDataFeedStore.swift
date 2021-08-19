@@ -34,15 +34,15 @@ public final class CoreDataFeedStore: FeedStore {
 			do {
 				if let cache = try ManagedCache.find(in: context) {
 					completion(.found(
-						feed: cache.feed!
+						feed: cache.feed
 							.compactMap { ($0 as? ManagedFeedImage) }
 							.map {
-								LocalFeedImage(id: $0.id!,
+								LocalFeedImage(id: $0.id,
 								               description: $0.imageDescription,
 								               location: $0.location,
-								               url: $0.url!)
+								               url: $0.url)
 							},
-						timestamp: cache.timestamp!))
+						timestamp: cache.timestamp))
 				} else {
 					completion(.empty)
 				}
@@ -79,15 +79,29 @@ public final class CoreDataFeedStore: FeedStore {
 	}
 }
 
-private extension ManagedCache {
+import CoreData
+
+public class ManagedCache: NSManagedObject {
+	@NSManaged var timestamp: Date
+	@NSManaged var feed: NSOrderedSet
+
 	static func getNewUniqueInstance(context: NSManagedObjectContext) throws -> ManagedCache {
 		try find(in: context).map(context.delete)
 		return ManagedCache(context: context)
 	}
 
 	static func find(in context: NSManagedObjectContext) throws -> ManagedCache? {
-		let request = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
+		guard let name = entity().name else { return nil }
+		let request = NSFetchRequest<ManagedCache>(entityName: name)
 		request.returnsObjectsAsFaults = false
 		return try context.fetch(request).first
 	}
+}
+
+public class ManagedFeedImage: NSManagedObject {
+	@NSManaged var id: UUID
+	@NSManaged var imageDescription: String?
+	@NSManaged var location: String?
+	@NSManaged var url: URL
+	@NSManaged var cache: ManagedCache
 }
