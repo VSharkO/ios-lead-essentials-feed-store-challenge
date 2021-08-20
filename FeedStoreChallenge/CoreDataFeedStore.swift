@@ -69,9 +69,7 @@ public final class CoreDataFeedStore: FeedStore {
 				try context.save()
 				completion(nil)
 			} catch {
-				if let cache = try? ManagedCache.find(in: context) {
-					context.delete(cache)
-				}
+				context.reset()
 				completion(error)
 			}
 		}
@@ -81,10 +79,10 @@ public final class CoreDataFeedStore: FeedStore {
 		let context = self.context
 		context.perform {
 			do {
-				try ManagedCache.find(in: context).map(context.delete)
-				try context.save()
+				try ManagedCache.find(in: context).map(context.delete).map(context.save)
 				completion(nil)
 			} catch {
+				context.reset()
 				completion(error)
 			}
 		}
