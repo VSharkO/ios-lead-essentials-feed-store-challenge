@@ -88,28 +88,3 @@ public final class CoreDataFeedStore: FeedStore {
 		}
 	}
 }
-
-public class ManagedCache: NSManagedObject {
-	@NSManaged var timestamp: Date
-	@NSManaged var feed: NSOrderedSet
-
-	static func getNewUniqueInstance(context: NSManagedObjectContext) throws -> ManagedCache {
-		try find(in: context).map(context.delete)
-		return ManagedCache(context: context)
-	}
-
-	static func find(in context: NSManagedObjectContext) throws -> ManagedCache? {
-		guard let name = entity().name else { return nil }
-		let request = NSFetchRequest<ManagedCache>(entityName: name)
-		request.returnsObjectsAsFaults = false
-		return try context.fetch(request).first
-	}
-}
-
-public class ManagedFeedImage: NSManagedObject {
-	@NSManaged var id: UUID
-	@NSManaged var imageDescription: String?
-	@NSManaged var location: String?
-	@NSManaged var url: URL
-	@NSManaged var cache: ManagedCache
-}
